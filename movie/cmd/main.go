@@ -19,6 +19,7 @@ const serviceName = "movie"
 
 func main() {
 	var port int
+
 	flag.IntVar(&port, "port", 8083, "API handler port")
 	flag.Parse()
 	log.Printf("Starting the movie service on port %d",

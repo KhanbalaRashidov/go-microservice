@@ -4,13 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"go-microservice/gen"
 	"go-microservice/pkg/discovery"
 	"go-microservice/pkg/discovery/consul"
 	"go-microservice/rating/internal/controller/rating"
-	httphandler "go-microservice/rating/internal/handler/http"
+	grpchandler "go-microservice/rating/internal/handler/grpc"
 	"go-microservice/rating/internal/repository/memory"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
-	"net/http"
+	"net"
 	"time"
 )
 
@@ -48,10 +51,17 @@ func main() {
 
 	repo := memory.New()
 	ctrl := rating.New(repo)
-	h := httphandler.New(ctrl)
+	h := grpchandler.New(ctrl)
 
-	http.Handle("/rating", http.HandlerFunc(h.Handle))
-	if err := http.ListenAndServe(":8082", nil); err != nil {
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	srv := grpc.NewServer()
+	reflection.Register(srv)
+	gen.RegisterRatingServiceServer(srv, h)
+	if err := srv.Serve(lis); err != nil {
 		panic(err)
 	}
 }
