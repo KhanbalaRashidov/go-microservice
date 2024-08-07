@@ -14,14 +14,19 @@ type ratingRepository interface {
 	Put(ctx context.Context, recordID model.RecordId, recordType model.RecordType, rating *model.Rating) error
 }
 
+type ratingIngester interface {
+	Ingest(ctx context.Context) (chan model.RatingEvent, error)
+}
+
 // Controller defines a rating service controller.
 type Controller struct {
-	repo ratingRepository
+	repo     ratingRepository
+	ingester ratingIngester
 }
 
 // New creates a rating service controller.
-func New(repo ratingRepository) *Controller {
-	return &Controller{repo}
+func New(repo ratingRepository, ingester ratingIngester) *Controller {
+	return &Controller{repo, ingester}
 }
 
 func (c *Controller) Get(ctx context.Context, recordId model.RecordId, recordType model.RecordType) (float64, error) {
@@ -40,4 +45,17 @@ func (c *Controller) Get(ctx context.Context, recordId model.RecordId, recordTyp
 
 func (c *Controller) Put(ctx context.Context, recordId model.RecordId, recordType model.RecordType, rating *model.Rating) error {
 	return c.repo.Put(ctx, recordId, recordType, rating)
+}
+
+func (s *Controller) StartIngestion(ctx context.Context) error {
+	ch, err := s.ingester.Ingest(ctx)
+	if err != nil {
+		return err
+	}
+	for e := range ch {
+		if err := s.Put(ctx, e.RecordId, e.RecordType, &model.Rating{UserId: e.UserId, Value: e.Value}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
