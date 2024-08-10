@@ -9,7 +9,7 @@ import (
 	"go-microservice/pkg/discovery/consul"
 	"go-microservice/rating/internal/controller/rating"
 	grpchandler "go-microservice/rating/internal/handler/grpc"
-	"go-microservice/rating/internal/repository/memory"
+	"go-microservice/rating/internal/repository/mysql"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -49,7 +49,10 @@ func main() {
 
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	repo := memory.New()
+	repo, err := mysql.New()
+	if err != nil {
+		panic(err)
+	}
 	ctrl := rating.New(repo, nil)
 	h := grpchandler.New(ctrl)
 

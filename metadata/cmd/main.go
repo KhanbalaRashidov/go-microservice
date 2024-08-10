@@ -7,7 +7,7 @@ import (
 	"go-microservice/gen"
 	"go-microservice/metadata/internal/controller/metadata"
 	grpchandler "go-microservice/metadata/internal/handler/grpc"
-	"go-microservice/metadata/internal/repository/memory"
+	"go-microservice/metadata/internal/repository/mysql"
 	"go-microservice/pkg/discovery"
 	"go-microservice/pkg/discovery/consul"
 	"google.golang.org/grpc"
@@ -43,7 +43,10 @@ func main() {
 		}
 	}()
 	defer registry.Deregister(ctx, instanceID, serviceName)
-	repo := memory.NewRepository()
+	repo, err := mysql.New()
+	if err != nil {
+		panic(err)
+	}
 	ctrl := metadata.New(repo)
 	h := grpchandler.New(ctrl)
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
