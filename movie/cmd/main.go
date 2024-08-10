@@ -58,7 +58,7 @@ func main() {
 	h := httphandler.New(svc)
 	http.Handle("/movie", http.HandlerFunc(h.
 		GetMovieDetails))
-	if err := http.ListenAndServe(fmt.Sprintf(":%d",
+	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d",
 		port), nil); err != nil {
 		panic(err)
 	}

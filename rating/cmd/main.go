@@ -56,7 +56,7 @@ func main() {
 	ctrl := rating.New(repo, nil)
 	h := grpchandler.New(ctrl)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%v", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
